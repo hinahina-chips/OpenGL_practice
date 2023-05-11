@@ -22,6 +22,10 @@ using namespace cv;
 #include <glm/gtc/type_ptr.hpp>
 #include <opencv2/highgui.hpp>
 
+#include <opencv2/aruco.hpp>
+#include <opencv2/objdetect/aruco_detector.hpp>
+#include <opencv2/aruco/charuco.hpp>
+
 int WIDTH = 512 / 2;
 int HEIGHT = 394 / 2;
 
@@ -158,18 +162,33 @@ void set_buffers(GLuint& vertexbuffer, GLuint& uvbuffer, GLuint& normalbuffer) {
 
 bool checkChess(Mat& image, Size chessSize, vector<Point2f>& imagepoint) {
 	Mat gray;
-
+	bool success;
 	cvtColor(image, gray, COLOR_BGR2GRAY);
-	bool success = findChessboardCorners(image, chessSize, imagepoint, CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_FAST_CHECK | CALIB_CB_NORMALIZE_IMAGE);
-	//cout<<success<<endl;
-	if (success) {
+
+    cv:Mat markerImage;
+	aruco::Dictionary dict = aruco::getPredefinedDictionary(aruco::DICT_4X4_250);
+	aruco::generateImageMarker(dict, 23, 200, markerImage, 1);
+	cv::imwrite("marker23.png", markerImage);
+
+	std::vector<int> markerIds;
+	std::vector<vector<cv::Point2f>> markerCorners, rejectedCandidates;
+	cv::aruco::DetectorParameters detectorParams = cv::aruco::DetectorParameters();
+	cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
+	cv::aruco::ArucoDetector detector(dict, detectorParams);
+	detector.detectMarkers(image, markerCorners, markerIds, rejectedCandidates);
+	if (markerIds.size() > 0) {
+		success = true;
 		Size winSize = Size(5, 5);
 		Size zeroZone = Size(-1, -1);
 		TermCriteria criteria = TermCriteria(TermCriteria::EPS + TermCriteria::COUNT, 40, 0.001);
+		imagepoint = markerCorners[0];
 		cornerSubPix(gray, imagepoint, winSize, zeroZone, criteria);
-
-		//drawChessboardCorners(image, chessSize, imagepoint, success);
 	}
+	else {
+		success = false;
+	}
+		//drawChessboardCorners(image, chessSize, imagepoint, success);
+
 	return success;
 }
 
@@ -204,7 +223,7 @@ bool drawArrow(Mat& image, vector<Point3f> src, vector<Point3f> dist, Mat rvec, 
 
 int main(void)
 {
-	Size chessSize = Size(7, 7);
+	Size chessSize = Size(8, 10);
 	Mat frame;
 	VideoCapture cap = VideoCapture(0);
 	Mat cameraMatrix, R, T, distCoeffs;
@@ -273,7 +292,16 @@ int main(void)
 			vector<vector<Point2f> > imagepoints{ imagepoint };
 			vector<vector<Point3f> > objectpoints{ objectpoint };
 			Mat rvec, tvec;
-			calibrateCamera(InputArrayOfArrays(objectpoints), InputArrayOfArrays(imagepoints), frameSize, cameraMatrix, distCoeffs, R, T);
+	        
+			std::string  fileName1 = "C:/Users/hinah/source/repos/kadai12/camera.xml";
+			cv::FileStorage tcvfs(fileName1, cv::FileStorage::READ);
+			cv::read(tcvfs["intrinsic"], cameraMatrix);
+			cv::read(tcvfs["distortion"], distCoeffs);
+			tcvfs.release();
+			if (cameraMatrix.cols != 3) {
+				cout << "can't read camera parameter: " << fileName1 << endl;
+				getchar();
+			}
 			solvePnP(Mat(objectpoint), Mat(imagepoint), cameraMatrix, distCoeffs, rvec, tvec);
 			projectPoints(Mat(centor), rvec, tvec, cameraMatrix, distCoeffs, centorpoint);
 
