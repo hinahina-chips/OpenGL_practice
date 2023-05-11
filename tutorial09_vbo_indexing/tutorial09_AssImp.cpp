@@ -162,35 +162,21 @@ void set_buffers(GLuint& vertexbuffer, GLuint& uvbuffer, GLuint& normalbuffer) {
 
 bool checkChess(Mat& image, Size chessSize, vector<Point2f>& imagepoint) {
 	Mat gray;
-	bool success;
+
 	cvtColor(image, gray, COLOR_BGR2GRAY);
-
-    cv:Mat markerImage;
-	aruco::Dictionary dict = aruco::getPredefinedDictionary(aruco::DICT_4X4_250);
-	aruco::generateImageMarker(dict, 23, 200, markerImage, 1);
-	cv::imwrite("marker23.png", markerImage);
-
-	std::vector<int> markerIds;
-	std::vector<vector<cv::Point2f>> markerCorners, rejectedCandidates;
-	cv::aruco::DetectorParameters detectorParams = cv::aruco::DetectorParameters();
-	cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
-	cv::aruco::ArucoDetector detector(dict, detectorParams);
-	detector.detectMarkers(image, markerCorners, markerIds, rejectedCandidates);
-	if (markerIds.size() > 0) {
-		success = true;
+	bool success = findChessboardCorners(image, chessSize, imagepoint, CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_FAST_CHECK | CALIB_CB_NORMALIZE_IMAGE);
+	//cout<<success<<endl;
+	if (success) {
 		Size winSize = Size(5, 5);
 		Size zeroZone = Size(-1, -1);
 		TermCriteria criteria = TermCriteria(TermCriteria::EPS + TermCriteria::COUNT, 40, 0.001);
-		imagepoint = markerCorners[0];
 		cornerSubPix(gray, imagepoint, winSize, zeroZone, criteria);
-	}
-	else {
-		success = false;
-	}
-		//drawChessboardCorners(image, chessSize, imagepoint, success);
 
+		//drawChessboardCorners(image, chessSize, imagepoint, success);
+	}
 	return success;
 }
+
 
 void compute_MVP(GLuint MatrixID, GLuint ViewMatrixID, GLuint ModelMatrixID, float x, float y, float z) {
 	// Compute the MVP matrix from keyboard and mouse input
@@ -223,7 +209,7 @@ bool drawArrow(Mat& image, vector<Point3f> src, vector<Point3f> dist, Mat rvec, 
 
 int main(void)
 {
-	Size chessSize = Size(8, 10);
+	Size chessSize = Size(7, 7);
 	Mat frame;
 	VideoCapture cap = VideoCapture(0);
 	Mat cameraMatrix, R, T, distCoeffs;
@@ -321,6 +307,20 @@ int main(void)
 			glUniform1i(TextureID, 0);
 			set_buffers(vertexbuffer, uvbuffer, normalbuffer);
 			// Draw the triangles !
+			int i;
+			int j;
+			static int r = 0; /* âÒì]äp */
+
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			glLoadIdentity();
+
+			/* éãì_à íuÇ∆éãê¸ï˚å¸ */
+			gluLookAt(3.0, 4.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+			/* ê}å`ÇÃâÒì] */
+			glRotated((double)r / 5, 0.0, 1.0, 0.0);
+
 			glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
 			glDisableVertexAttribArray(0);

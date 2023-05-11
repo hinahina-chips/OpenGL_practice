@@ -10,6 +10,7 @@ out vec2 UV;
 out vec3 Position_worldspace;
 out vec3 Normal_cameraspace;
 out vec3 EyeDirection_cameraspace;
+out vec3 EyeDirection_cameraspace;
 out vec3 LightDirection_cameraspace;
 
 // Values that stay constant for the whole mesh.
