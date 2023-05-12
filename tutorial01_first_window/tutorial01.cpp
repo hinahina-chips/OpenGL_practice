@@ -22,7 +22,7 @@ int main( void )
 		getchar();
 		return -1;
 	}
-
+　　　　 // ピクセルの輪郭のジャギーを減らすために使用
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -38,7 +38,7 @@ int main( void )
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-
+　　　　 // 指定したウィンドウに関する入力モードを設定
 	// Initialize GLEW
 	if (glewInit() != GLEW_OK) {
 		fprintf(stderr, "Failed to initialize GLEW\n");
@@ -49,6 +49,7 @@ int main( void )
 
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+	// 第2引数にGLFW_STICKY_KEYSを指定することで、キーが押されたまま放されるまでキーの状態が保持されるようになる。第3引数にGL_TRUEを指定することで、この入力モードが有効になる。
 
 	// Dark blue background
 	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
